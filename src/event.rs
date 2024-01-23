@@ -4,6 +4,8 @@ use crate::{
         book::{OrderBook, OrderBookL1},
         candle::Candle,
         liquidation::Liquidation,
+        mark_price::MarkPrice,
+        option_summary::OptionSummary,
         trade::PublicTrade,
     },
 };
@@ -60,6 +62,8 @@ pub enum DataKind {
     OrderBook(OrderBook),
     Candle(Candle),
     Liquidation(Liquidation),
+    MarkPrice(MarkPrice),
+    OptionSummary(OptionSummary),
 }
 
 impl From<MarketEvent<PublicTrade>> for MarketEvent<DataKind> {
@@ -118,6 +122,30 @@ impl From<MarketEvent<Liquidation>> for MarketEvent<DataKind> {
             exchange: event.exchange,
             instrument: event.instrument,
             kind: DataKind::Liquidation(event.kind),
+        }
+    }
+}
+
+impl From<MarketEvent<MarkPrice>> for MarketEvent<DataKind> {
+    fn from(event: MarketEvent<MarkPrice>) -> Self {
+        Self {
+            exchange_time: event.exchange_time,
+            received_time: event.received_time,
+            exchange: event.exchange,
+            instrument: event.instrument,
+            kind: DataKind::MarkPrice(event.kind),
+        }
+    }
+}
+
+impl From<MarketEvent<OptionSummary>> for MarketEvent<DataKind> {
+    fn from(event: MarketEvent<OptionSummary>) -> Self {
+        Self {
+            exchange_time: event.exchange_time,
+            received_time: event.received_time,
+            exchange: event.exchange,
+            instrument: event.instrument,
+            kind: DataKind::OptionSummary(event.kind),
         }
     }
 }

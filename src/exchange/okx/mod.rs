@@ -1,10 +1,15 @@
 use self::{
-    channel::OkxChannel, market::OkxMarket, subscription::OkxSubResponse, trade::OkxTrades,
+    channel::OkxChannel, mark::OkxMarkPrices, market::OkxMarket,
+    option_summary::OkxOptionSummaries, subscription::OkxSubResponse, ticker::OkxOrderBookL1,
+    trade::OkxTrades,
 };
 use crate::{
     exchange::{Connector, ExchangeId, ExchangeSub, PingInterval, StreamSelector},
     subscriber::{validator::WebSocketSubValidator, WebSocketSubscriber},
-    subscription::trade::PublicTrades,
+    subscription::{
+        book::OrderBooksL1, mark_price::MarkPrices, option_summary::OptionSummaries,
+        trade::PublicTrades,
+    },
     transformer::stateless::StatelessTransformer,
     ExchangeWsStream,
 };
@@ -17,6 +22,9 @@ use url::Url;
 /// Defines the type that translates a Barter [`Subscription`](crate::subscription::Subscription)
 /// into an exchange [`Connector`] specific channel used for generating [`Connector::requests`].
 pub mod channel;
+pub mod mark;
+pub mod option_summary;
+pub mod ticker;
 
 /// Defines the type that translates a Barter [`Subscription`](crate::subscription::Subscription)
 /// into an exchange [`Connector`] specific market used for generating [`Connector::requests`].
@@ -79,4 +87,14 @@ impl Connector for Okx {
 
 impl StreamSelector<PublicTrades> for Okx {
     type Stream = ExchangeWsStream<StatelessTransformer<Self, PublicTrades, OkxTrades>>;
+}
+
+impl StreamSelector<OrderBooksL1> for Okx {
+    type Stream = ExchangeWsStream<StatelessTransformer<Self, OrderBooksL1, OkxOrderBookL1>>;
+}
+impl StreamSelector<MarkPrices> for Okx {
+    type Stream = ExchangeWsStream<StatelessTransformer<Self, MarkPrices, OkxMarkPrices>>;
+}
+impl StreamSelector<OptionSummaries> for Okx {
+    type Stream = ExchangeWsStream<StatelessTransformer<Self, OptionSummaries, OkxOptionSummaries>>;
 }
