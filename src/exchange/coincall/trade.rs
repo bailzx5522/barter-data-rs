@@ -9,7 +9,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 /// Terse type alias for an [`Okx`](super::Okx) real-time trades WebSocket message.
-pub type OkxTrades = OkxMessage<OkxTrade>;
+pub type CoincallTrades = CoincallMessage<CoincallTrade>;
 
 /// [`Okx`](super::Okx) market data WebSocket message.
 ///
@@ -55,7 +55,7 @@ pub type OkxTrades = OkxMessage<OkxTrade>;
 /// }
 /// ```
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-pub struct OkxMessage<T> {
+pub struct CoincallMessage<T> {
     #[serde(
         rename = "arg",
         deserialize_with = "de_okx_message_arg_as_subscription_id"
@@ -64,7 +64,7 @@ pub struct OkxMessage<T> {
     pub data: Vec<T>,
 }
 
-impl<T> Identifier<Option<SubscriptionId>> for OkxMessage<T> {
+impl<T> Identifier<Option<SubscriptionId>> for CoincallMessage<T> {
     fn id(&self) -> Option<SubscriptionId> {
         Some(self.subscription_id.clone())
     }
@@ -76,7 +76,7 @@ impl<T> Identifier<Option<SubscriptionId>> for OkxMessage<T> {
 ///
 /// See docs: <https://www.okx.com/docs-v5/en/#websocket-api-public-channel-trades-channel>
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct OkxTrade {
+pub struct CoincallTrade {
     #[serde(rename = "tradeId")]
     pub id: String,
     #[serde(rename = "px", deserialize_with = "barter_integration::de::de_str")]
@@ -91,8 +91,8 @@ pub struct OkxTrade {
     pub time: DateTime<Utc>,
 }
 
-impl From<(ExchangeId, Instrument, OkxTrades)> for MarketIter<PublicTrade> {
-    fn from((exchange_id, instrument, trades): (ExchangeId, Instrument, OkxTrades)) -> Self {
+impl From<(ExchangeId, Instrument, CoincallTrades)> for MarketIter<PublicTrade> {
+    fn from((exchange_id, instrument, trades): (ExchangeId, Instrument, CoincallTrades)) -> Self {
         trades
             .data
             .into_iter()

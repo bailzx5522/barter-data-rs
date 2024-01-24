@@ -1,10 +1,10 @@
-use super::{channel::OkxChannel, market::OkxMarket};
+use super::{channel::CoincallChannel, market::CoincallMarket};
 use crate::exchange::subscription::ExchangeSub;
 use barter_integration::{error::SocketError, Validator};
 use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 
 // Implement custom Serialize to assist aesthetics of <Okx as Connector>::requests() function.
-impl Serialize for ExchangeSub<OkxChannel, OkxMarket> {
+impl Serialize for ExchangeSub<CoincallChannel, CoincallMarket> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -25,13 +25,7 @@ impl Serialize for ExchangeSub<OkxChannel, OkxMarket> {
 /// ### Raw Payload Examples
 /// #### Subscription Trades Ok Response
 /// ```json
-/// {
-///   "event": "subscribe",
-///   "args": {
-///     "channel": "trades",
-///     "instId": "BTC-USD-191227"
-///   }
-/// }
+/// { "action":"subscribe", "dataType":"spotPrice", "payload":{ "symbol":"BTCUSD" } }
 /// ```
 ///
 /// #### Subscription Trades Error Response
@@ -46,7 +40,7 @@ impl Serialize for ExchangeSub<OkxChannel, OkxMarket> {
 /// See docs: <https://www.okx.com/docs-v5/en/#websocket-api-subscribe>
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
 #[serde(tag = "event", rename_all = "lowercase")]
-pub enum OkxSubResponse {
+pub enum CoincallSubResponse {
     #[serde(rename = "subscribe")]
     Subscribed,
     Error {
@@ -56,7 +50,7 @@ pub enum OkxSubResponse {
     },
 }
 
-impl Validator for OkxSubResponse {
+impl Validator for CoincallSubResponse {
     fn validate(self) -> Result<Self, SocketError>
     where
         Self: Sized,

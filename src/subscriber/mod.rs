@@ -70,6 +70,9 @@ impl Subscriber for WebSocketSubscriber {
             subscriptions,
         } = Self::SubMapper::map::<Exchange, Kind>(subscriptions);
 
+        // send login
+        Exchange::login(websocket)?;
+
         // Send Subscriptions over WebSocket
         for subscription in subscriptions {
             debug!(%exchange, payload = ?subscription, "sending exchange subscription");

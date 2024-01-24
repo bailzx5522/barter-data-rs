@@ -7,7 +7,7 @@ use crate::{
 use barter_integration::{
     error::SocketError,
     model::instrument::{kind::InstrumentKind, Instrument},
-    protocol::websocket::WsMessage,
+    protocol::websocket::{WebSocket, WsMessage},
     Validator,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -39,6 +39,8 @@ pub mod gateio;
 /// `Kraken` [`Connector`] and [`StreamSelector`] implementations.
 pub mod kraken;
 
+/// `Coincall` [`Connector`] and [`StreamSelector`] implementations.
+pub mod coincall;
 /// `Okx` [`Connector`] and [`StreamSelector`] implementations.
 pub mod okx;
 
@@ -138,6 +140,8 @@ where
     fn subscription_timeout() -> Duration {
         DEFAULT_SUBSCRIPTION_TIMEOUT
     }
+
+    fn login(websocket: WebSocket) -> Result<(WebSocket, Map<Instrument>), SocketError>;
 }
 
 /// Used when an exchange has servers different
@@ -185,6 +189,7 @@ pub enum ExchangeId {
     GateioOptions,
     Kraken,
     Okx,
+    Coincall,
 }
 
 impl From<ExchangeId> for barter_integration::model::Exchange {
@@ -218,6 +223,7 @@ impl ExchangeId {
             ExchangeId::GateioOptions => "gateio_options",
             ExchangeId::Kraken => "kraken",
             ExchangeId::Okx => "okx",
+            ExchangeId::Coincall => "coincall",
         }
     }
 
@@ -238,19 +244,19 @@ impl ExchangeId {
             (_, Spot) => true,
 
             // Future
-            (GateioFuturesUsd | GateioFuturesBtc | Okx, Future(_)) => true,
+            (GateioFuturesUsd | GateioFuturesBtc | Okx | Coincall, Future(_)) => true,
             (_, Future(_)) => false,
 
             // Future Perpetual Swaps
             (
                 BinanceFuturesUsd | Bitmex | Okx | BybitPerpetualsUsd | GateioPerpetualsUsd
-                | GateioPerpetualsBtc,
+                | GateioPerpetualsBtc | Coincall,
                 Perpetual,
             ) => true,
             (_, Perpetual) => false,
 
             // Option
-            (GateioOptions | Okx, Option(_)) => true,
+            (GateioOptions | Okx | Coincall, Option(_)) => true,
             (_, Option(_)) => false,
         }
     }
