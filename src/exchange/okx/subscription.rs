@@ -11,7 +11,14 @@ impl Serialize for ExchangeSub<OkxChannel, OkxMarket> {
     {
         let mut state = serializer.serialize_struct("OkxSubArg", 2)?;
         state.serialize_field("channel", self.channel.as_ref())?;
-        state.serialize_field("instId", self.market.as_ref())?;
+        match self.channel.as_ref() {
+            "opt-summary" => {
+                state.serialize_field("instFamily", self.market.as_ref())?;
+            },
+            _ => {
+                state.serialize_field("instId", self.market.as_ref())?;
+            },
+        }
         state.end()
     }
 }

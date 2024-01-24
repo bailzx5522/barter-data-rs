@@ -1,8 +1,6 @@
 use super::trade::OkxMessage;
 use crate::{
-    event::{MarketEvent, MarketIter},
-    exchange::{subscription::ExchangeSub, ExchangeId},
-    subscription::option_summary::{OptionSummaries, OptionSummary},
+    event::{MarketEvent, MarketIter}, exchange::ExchangeId, subscription::option_summary::{OptionSummaries, OptionSummary}
 };
 
 use barter_integration::model::{instrument::Instrument, Exchange, SubscriptionId};
@@ -55,6 +53,9 @@ pub type OkxOptionSummaries = OkxMessage<OkxOptionSummary>;
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct OkxOptionSummary {
+    #[serde(rename = "instType")]
+    pub inst_type: String,
+
     #[serde(rename = "instId")]
     pub inst_id: String,
 
