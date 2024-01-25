@@ -141,6 +141,7 @@ where
         DEFAULT_SUBSCRIPTION_TIMEOUT
     }
 
+    fn login_request(&self) {}
 }
 
 /// Used when an exchange has servers different
@@ -259,4 +260,9 @@ impl ExchangeId {
             (_, Option(_)) => false,
         }
     }
+}
+pub trait Login {
+    fn login_request();
+    fn sign();
+    fn signature();
 }

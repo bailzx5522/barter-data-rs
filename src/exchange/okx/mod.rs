@@ -5,7 +5,9 @@ use self::{
 };
 use crate::{
     exchange::{Connector, ExchangeId, ExchangeSub, PingInterval, StreamSelector},
-    subscriber::{validator::WebSocketSubValidator, WebSocketSubscriber, WebSocketSubscriberWithLogin},
+    subscriber::{
+        validator::WebSocketSubValidator, WebSocketSubscriber, WebSocketSubscriberWithLogin,
+    },
     subscription::{
         book::OrderBooksL1, mark_price::MarkPrices, option_summary::OptionSummaries,
         trade::PublicTrades,
@@ -20,6 +22,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::time::Duration;
 use url::Url;
+
+use super::Login;
 
 /// Defines the type that translates a Barter [`Subscription`](crate::subscription::Subscription)
 /// into an exchange [`Connector`] specific channel used for generating [`Connector::requests`].
@@ -52,10 +56,38 @@ pub const PING_INTERVAL_OKX: Duration = Duration::from_secs(29);
 /// [`Okx`] exchange.
 ///
 /// See docs: <https://www.okx.com/docs-v5/en/#websocket-api>
-#[derive(
-    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, DeExchange, SerExchange,
-)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, DeExchange, SerExchange)]
 pub struct Okx;
+
+impl Okx {
+    //     // pub fn new(access_key: &str, secret_key: &str, passphrase: &str) -> Self {
+    //     //     Self {
+    //     //         access_key: String::from(access_key),
+    //     //         secret_key: String::from(secret_key),
+    //     //         passphrase: String::from(passphrase),
+    //     //     }
+    //     // }
+    //     pub fn signature(&self) -> (&str, String) {
+    //         // let signed_key = hmac::Key::new(hmac::HMAC_SHA256, self.secret.as_bytes());
+    //         // let sign_message = match url.query() {
+    //         //     Some(query) => format!(
+    //         //         "{}{}{}?{}{}",
+    //         //         timestamp,
+    //         //         method.as_str(),
+    //         //         url.path(),
+    //         //         query,
+    //         //         body
+    //         //     ),
+    //         //     None => format!("{}{}{}{}", timestamp, method.as_str(), url.path(), body),
+    //         // };
+
+    //         // let signature = encode(hmac::sign(&signed_key, sign_message.as_bytes()).as_ref());
+    //         (self.access_key.as_str(), String::from("123"))
+    //     }
+    fn login_request(&self) {
+        print!("-------------- login request");
+    }
+}
 
 impl Connector for Okx {
     const ID: ExchangeId = ExchangeId::Okx;
@@ -85,16 +117,6 @@ impl Connector for Okx {
             .to_string(),
         )]
     }
-
-}
-
-pub trait Signer {
-    const ak: String;
-    fn sign();
-}
-impl Signer for Okx{
-    const ak = "asdf".to_string();
-    fn sign(){}
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

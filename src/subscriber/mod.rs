@@ -3,7 +3,7 @@ use self::{
     validator::SubscriptionValidator,
 };
 use crate::{
-    exchange::Connector,
+    exchange::{Connector, Login},
     subscription::{Map, SubKind, Subscription, SubscriptionMeta},
     Identifier,
 };
@@ -127,23 +127,29 @@ impl Subscriber for WebSocketSubscriberWithLogin {
             timestamp: String,
             sign: String,
         }
-        websocket.send(WsMessage::Text(
-            json!({
-                "op": "login",
-                "args": vec![LoginArgs{
-                    api_key: "asdf".to_string(),
-                    passphrase: "asdf".to_string(),
-                    timestamp: "asdf".to_string(),
-                    sign: "asdf".to_string(),
-                }],
-            })
-            .to_string(),
-        )).await?;
+        // exchange.login_request(Exchange);
+        websocket
+            .send(WsMessage::Text(
+                json!({
+                    "op": "login",
+                    "args": vec![LoginArgs{
+                        api_key: "asdf".to_string(),
+                        passphrase: "asdf".to_string(),
+                        timestamp: "asdf".to_string(),
+                        sign: "asdf".to_string(),
+                    }],
+                })
+                .to_string(),
+            ))
+            .await?;
         let data = websocket.next().await;
         let response = match data {
             Some(message) => message,
-            None => {return Err(SocketError::Subscribe("WebSocket stream terminated unexpectedly".to_string()));}
-            // None => Err(SocketError::Subscribe("WebSocket stream terminated unexpectedly".to_string()))
+            None => {
+                return Err(SocketError::Subscribe(
+                    "WebSocket stream terminated unexpectedly".to_string(),
+                ));
+            } // None => Err(SocketError::Subscribe("WebSocket stream terminated unexpectedly".to_string()))
         };
         println!("-------------- {:?}", response);
 

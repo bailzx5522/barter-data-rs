@@ -7,7 +7,9 @@ use barter_data::{
     },
     streams::Streams,
     subscription::{
-        book::{OrderBooksL1, OrderBooksL2}, option_summary::OptionSummaries, trade::PublicTrades
+        book::{OrderBooksL1, OrderBooksL2},
+        option_summary::OptionSummaries,
+        trade::PublicTrades,
     },
 };
 use barter_integration::model::instrument::kind::InstrumentKind;
@@ -26,12 +28,13 @@ async fn main() {
     //   Subscriptions passed.
 
     // Initialise MarketEvent<DataKind> Streams for various exchanges
+    let okx = Okx::new("","","");
     let streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
 
     .add(Streams::<OptionSummaries>::builder()
         .subscribe([
     // (Okx, "btc", "usd", InstrumentKind::Spot, OptionSummaries),
-    (Okx, "eth", "usd", InstrumentKind::Spot, OptionSummaries),
+    (okx, "eth", "usd", InstrumentKind::Spot, OptionSummaries),
     ])
     )
         .init()
