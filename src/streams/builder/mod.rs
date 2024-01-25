@@ -7,7 +7,7 @@ use crate::{
     Identifier,
 };
 use barter_integration::{error::SocketError, Validator};
-use std::{collections::HashMap, fmt::Debug, future::Future, pin::Pin};
+use std::{collections::HashMap, fmt::Debug, future::Future, pin::Pin, string};
 use tokio::sync::mpsc;
 
 /// Defines the [`MultiStreamBuilder`](multi::MultiStreamBuilder) API for ergonomically
@@ -28,6 +28,9 @@ where
 {
     pub channels: HashMap<ExchangeId, ExchangeChannel<MarketEvent<Kind::Event>>>,
     pub futures: Vec<SubscribeFuture>,
+    pub ak: Option<String>,
+    pub sk: Option<String>,
+    pub pwd: Option<String>,
 }
 
 impl<Kind> Debug for StreamBuilder<Kind>
@@ -51,7 +54,22 @@ where
         Self {
             channels: HashMap::new(),
             futures: Vec::new(),
+            ak: None,
+            sk: None,
+            pwd: None,
         }
+    }
+
+    pub fn aksk(
+        mut self,
+        access_key: Option<String>,
+        secret_key: Option<String>,
+        password: Option<String>,
+    ) -> Self {
+        self.ak = access_key;
+        self.sk = secret_key;
+        self.pwd = password;
+        self
     }
 
     /// Add a collection of [`Subscription`]s to the [`StreamBuilder`] that will be actioned on

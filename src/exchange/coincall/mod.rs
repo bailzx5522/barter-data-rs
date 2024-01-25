@@ -1,11 +1,10 @@
 use self::{
-    channel::OkxChannel, mark::OkxMarkPrices, market::OkxMarket,
-    option_summary::OkxOptionSummaries, subscription::OkxSubResponse, ticker::OkxOrderBookL1,
-    trade::OkxTrades,
+    channel::CoincallChannel, market::CoincallMarket, subscription::CoincallSubResponse,
+    trade::CoincallTrades,
 };
 use crate::{
     exchange::{Connector, ExchangeId, ExchangeSub, PingInterval, StreamSelector},
-    subscriber::{validator::WebSocketSubValidator, WebSocketSubscriber, WebSocketSubscriberWithLogin},
+    subscriber::{validator::WebSocketSubValidator, WebSocketSubscriber},
     subscription::{
         book::OrderBooksL1, mark_price::MarkPrices, option_summary::OptionSummaries,
         trade::PublicTrades,
@@ -15,8 +14,6 @@ use crate::{
 };
 use barter_integration::{error::SocketError, protocol::websocket::WsMessage};
 use barter_macro::{DeExchange, SerExchange};
-use futures::{SinkExt, StreamExt};
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::time::Duration;
 use url::Url;
@@ -24,9 +21,9 @@ use url::Url;
 /// Defines the type that translates a Barter [`Subscription`](crate::subscription::Subscription)
 /// into an exchange [`Connector`] specific channel used for generating [`Connector::requests`].
 pub mod channel;
-pub mod mark;
-pub mod option_summary;
-pub mod ticker;
+// pub mod mark;
+// pub mod option_summary;
+// pub mod ticker;
 
 /// Defines the type that translates a Barter [`Subscription`](crate::subscription::Subscription)
 /// into an exchange [`Connector`] specific market used for generating [`Connector::requests`].
@@ -41,8 +38,8 @@ pub mod trade;
 
 /// [`Okx`] server base url.
 ///
-/// See docs: <https://www.okx.com/docs-v5/en/#overview-api-resources-and-support>
-pub const BASE_URL_OKX: &str = "wss://wsaws.okx.com:8443/ws/v5/public";
+/// See docs: <https://docs.coincall.com/#options-websocket>
+pub const BASE_URL_OKX: &str = "wss://ws.coincall.com/options";
 
 /// [`Okx`] server [`PingInterval`] duration.
 ///
@@ -55,67 +52,57 @@ pub const PING_INTERVAL_OKX: Duration = Duration::from_secs(29);
 #[derive(
     Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, DeExchange, SerExchange,
 )]
-pub struct Okx;
+pub struct Coincall;
 
-impl Connector for Okx {
-    const ID: ExchangeId = ExchangeId::Okx;
-    type Channel = OkxChannel;
-    type Market = OkxMarket;
-    type Subscriber = WebSocketSubscriberWithLogin;
+impl Connector for Coincall {
+    const ID: ExchangeId = ExchangeId::Coincall;
+    type Channel = CoincallChannel;
+    type Market = CoincallMarket;
+    type Subscriber = WebSocketSubscriber;
     type SubValidator = WebSocketSubValidator;
-    type SubResponse = OkxSubResponse;
+    type SubResponse = CoincallSubResponse;
 
     fn url() -> Result<Url, SocketError> {
         Url::parse(BASE_URL_OKX).map_err(SocketError::UrlParse)
     }
 
+    // { "action":"heartbeat" }
     fn ping_interval() -> Option<PingInterval> {
         Some(PingInterval {
             interval: tokio::time::interval(PING_INTERVAL_OKX),
-            ping: || WsMessage::text("ping"),
+            ping: || {
+                WsMessage::Text(
+                    json!({
+                        "action": "heartbeat",
+                    })
+                    .to_string(),
+                )
+            },
         })
     }
 
     fn requests(exchange_subs: Vec<ExchangeSub<Self::Channel, Self::Market>>) -> Vec<WsMessage> {
         vec![WsMessage::Text(
             json!({
-                "op": "subscribe",
+                "action": "subscribe",
+                // "dataType": "",
                 "args": &exchange_subs,
             })
             .to_string(),
         )]
     }
-
 }
 
-pub trait Signer {
-    const ak: String;
-    fn sign();
-}
-impl Signer for Okx{
-    const ak = "asdf".to_string();
-    fn sign(){}
+impl StreamSelector<PublicTrades> for Coincall {
+    type Stream = ExchangeWsStream<StatelessTransformer<Self, PublicTrades, CoincallTrades>>;
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LoginArgs {
-    api_key: String,
-    passphrase: String,
-    timestamp: String,
-    sign: String,
-}
-
-impl StreamSelector<PublicTrades> for Okx {
-    type Stream = ExchangeWsStream<StatelessTransformer<Self, PublicTrades, OkxTrades>>;
-}
-
-impl StreamSelector<OrderBooksL1> for Okx {
-    type Stream = ExchangeWsStream<StatelessTransformer<Self, OrderBooksL1, OkxOrderBookL1>>;
-}
-impl StreamSelector<MarkPrices> for Okx {
-    type Stream = ExchangeWsStream<StatelessTransformer<Self, MarkPrices, OkxMarkPrices>>;
-}
-impl StreamSelector<OptionSummaries> for Okx {
-    type Stream = ExchangeWsStream<StatelessTransformer<Self, OptionSummaries, OkxOptionSummaries>>;
-}
+// impl StreamSelector<OrderBooksL1> for Okx {
+//     type Stream = ExchangeWsStream<StatelessTransformer<Self, OrderBooksL1, OkxOrderBookL1>>;
+// }
+// impl StreamSelector<MarkPrices> for Okx {
+//     type Stream = ExchangeWsStream<StatelessTransformer<Self, MarkPrices, OkxMarkPrices>>;
+// }
+// impl StreamSelector<OptionSummaries> for Okx {
+//     type Stream = ExchangeWsStream<StatelessTransformer<Self, OptionSummaries, OkxOptionSummaries>>;
+// }
