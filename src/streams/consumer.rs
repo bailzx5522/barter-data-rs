@@ -10,6 +10,8 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 use tracing::{error, info, warn};
 
+use super::builder::Signer;
+
 /// Initial duration that the [`consume`] function should wait after disconnecting before attempting
 /// to re-initialise a [`MarketStream`]. This duration will increase exponentially as a result
 /// of repeated disconnections with re-initialisation failures.
@@ -21,6 +23,7 @@ pub const STARTING_RECONNECT_BACKOFF_MS: u64 = 125;
 /// events are distributed downstream via the `exchange_tx mpsc::UnboundedSender`. A re-connection
 /// mechanism with an exponential backoff policy is utilised to ensure maximum up-time.
 pub async fn consume<Exchange, Kind>(
+    signer: Option<Signer>,
     subscriptions: Vec<Subscription<Exchange, Kind>>,
     exchange_tx: mpsc::UnboundedSender<MarketEvent<Kind::Event>>,
 ) -> DataError
@@ -50,7 +53,7 @@ where
         info!(%exchange, attempt, "attempting to initialise MarketStream");
 
         // Attempt to initialise MarketStream: if it fails on first attempt return DataError
-        let mut stream = match Exchange::Stream::init(&subscriptions).await {
+        let mut stream = match Exchange::Stream::init(&signer, &subscriptions).await {
             Ok(stream) => {
                 info!(%exchange, attempt, "successfully initialised MarketStream");
                 attempt = 0;

@@ -66,9 +66,13 @@ impl Validator for CoincallSubResponse {
 
 #[cfg(test)]
 mod tests {
+    use crate::exchange::okx::subscription::OkxSubResponse;
+
     use super::*;
 
     mod de {
+        use crate::exchange::okx::subscription::OkxSubResponse;
+
         use super::*;
 
         #[test]

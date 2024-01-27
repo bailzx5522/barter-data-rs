@@ -3,9 +3,7 @@ use self::{
     validator::SubscriptionValidator,
 };
 use crate::{
-    exchange::{Connector, Login},
-    subscription::{Map, SubKind, Subscription, SubscriptionMeta},
-    Identifier,
+    exchange::Connector, streams::builder::Signer, subscription::{Map, SubKind, Subscription, SubscriptionMeta}, Identifier
 };
 use async_trait::async_trait;
 use barter_integration::{
@@ -32,6 +30,7 @@ pub trait Subscriber {
     type SubMapper: SubscriptionMapper;
 
     async fn subscribe<Exchange, Kind>(
+        signer: &Option<Signer>,
         subscriptions: &[Subscription<Exchange, Kind>],
     ) -> Result<(WebSocket, Map<Instrument>), SocketError>
     where
@@ -49,6 +48,7 @@ impl Subscriber for WebSocketSubscriber {
     type SubMapper = WebSocketSubMapper;
 
     async fn subscribe<Exchange, Kind>(
+        _signer: &Option<Signer>,
         subscriptions: &[Subscription<Exchange, Kind>],
     ) -> Result<(WebSocket, Map<Instrument>), SocketError>
     where
@@ -96,6 +96,7 @@ impl Subscriber for WebSocketSubscriberWithLogin {
     type SubMapper = WebSocketSubMapper;
 
     async fn subscribe<Exchange, Kind>(
+         signer: &Option<Signer>,
         subscriptions: &[Subscription<Exchange, Kind>],
     ) -> Result<(WebSocket, Map<Instrument>), SocketError>
     where
@@ -118,40 +119,14 @@ impl Subscriber for WebSocketSubscriberWithLogin {
             subscriptions,
         } = Self::SubMapper::map::<Exchange, Kind>(subscriptions);
 
-        // send login
-        // Exchange::login(websocket)?;
-        #[derive(Debug, Clone, Serialize, Deserialize)]
-        struct LoginArgs {
-            api_key: String,
-            passphrase: String,
-            timestamp: String,
-            sign: String,
-        }
-        // exchange.login_request(Exchange);
-        websocket
-            .send(WsMessage::Text(
-                json!({
-                    "op": "login",
-                    "args": vec![LoginArgs{
-                        api_key: "asdf".to_string(),
-                        passphrase: "asdf".to_string(),
-                        timestamp: "asdf".to_string(),
-                        sign: "asdf".to_string(),
-                    }],
-                })
-                .to_string(),
-            ))
-            .await?;
-        let data = websocket.next().await;
-        let response = match data {
-            Some(message) => message,
-            None => {
-                return Err(SocketError::Subscribe(
-                    "WebSocket stream terminated unexpectedly".to_string(),
-                ));
-            } // None => Err(SocketError::Subscribe("WebSocket stream terminated unexpectedly".to_string()))
+
+        match signer {
+            Some(s) => {
+                println!("------------- signer {:?}", s.ak);
+                s.login_request(&mut websocket).await?;
+            },
+            None=>{}
         };
-        println!("-------------- {:?}", response);
 
         // Send Subscriptions over WebSocket
         for subscription in subscriptions {

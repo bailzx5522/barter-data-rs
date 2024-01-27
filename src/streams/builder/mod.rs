@@ -3,10 +3,19 @@ use crate::{
     error::DataError,
     event::MarketEvent,
     exchange::{ExchangeId, StreamSelector},
-    subscription::{SubKind, Subscription},
+    subscription::{Map, SubKind, Subscription},
     Identifier,
 };
-use barter_integration::{error::SocketError, Validator};
+use barter_integration::{error::SocketError, model::instrument::Instrument, protocol::{websocket::{WebSocket, WsMessage}}, Validator};
+use base64::encode;
+use http::Method;
+use ring::hmac;
+use chrono::Utc;
+use futures::SinkExt;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use tokio_stream::StreamExt;
+use url::Url;
 use std::{collections::HashMap, fmt::Debug, future::Future, pin::Pin, string};
 use tokio::sync::mpsc;
 
@@ -28,9 +37,8 @@ where
 {
     pub channels: HashMap<ExchangeId, ExchangeChannel<MarketEvent<Kind::Event>>>,
     pub futures: Vec<SubscribeFuture>,
-    pub ak: Option<String>,
-    pub sk: Option<String>,
-    pub pwd: Option<String>,
+    pub signer : Option<Signer>,
+
 }
 
 impl<Kind> Debug for StreamBuilder<Kind>
@@ -45,6 +53,8 @@ where
     }
 }
 
+
+
 impl<Kind> StreamBuilder<Kind>
 where
     Kind: SubKind,
@@ -54,21 +64,15 @@ where
         Self {
             channels: HashMap::new(),
             futures: Vec::new(),
-            ak: None,
-            sk: None,
-            pwd: None,
-        }
+            signer: None
+       }
     }
 
-    pub fn aksk(
+    pub fn signer(
         mut self,
-        access_key: Option<String>,
-        secret_key: Option<String>,
-        password: Option<String>,
+        signer: Option<Signer>,
     ) -> Self {
-        self.ak = access_key;
-        self.sk = secret_key;
-        self.pwd = password;
+        self.signer = signer;
         self
     }
 
@@ -92,7 +96,7 @@ where
         // Acquire channel Sender to send Market<Kind::Event> from consumer loop to user
         // '--> Add ExchangeChannel Entry if this Exchange <--> SubKind combination is new
         let exchange_tx = self.channels.entry(Exchange::ID).or_default().tx.clone();
-
+        let signer = self.signer.clone();
         // Add Future that once awaited will yield the Result<(), SocketError> of subscribing
         self.futures.push(Box::pin(async move {
             // Validate Subscriptions
@@ -103,7 +107,7 @@ where
             subscriptions.dedup();
 
             // Spawn a MarketStream consumer loop with these Subscriptions<Exchange, Kind>
-            tokio::spawn(consume(subscriptions, exchange_tx));
+            tokio::spawn(consume(signer, subscriptions, exchange_tx));
 
             Ok(())
         }));
@@ -177,6 +181,93 @@ where
         .collect::<Result<Vec<_>, SocketError>>()?;
 
     Ok(())
+}
+
+#[derive(Clone, Debug)]
+pub struct Signer{
+    pub ak: String,
+    pub sk: String,
+    pub pwd: String,
+
+}
+
+impl Signer{
+    pub fn new(ak: &str, sk: &str, pwd: &str)-> Self{
+        Self{
+            ak:ak.into(),
+            sk : sk.into(),
+            pwd: pwd.into()
+        }
+    }
+    pub fn sign(){}
+
+    pub fn signature(
+        &self,
+        method: Method,
+        timestamp: &str,
+        url: &Url,
+        body: &str,
+    ) -> (&str, String) {
+        // sign=CryptoJS.enc.Base64.stringify(CryptoJS.HmacSHA256(timestamp + 'GET' + '/users/self/verify' + body, SecretKey))
+        let signed_key = hmac::Key::new(hmac::HMAC_SHA256, self.sk.as_bytes());
+        let sign_message = match url.query() {
+            Some(query) => format!(
+                "{}{}{}?{}{}",
+                timestamp,
+                method.as_str(),
+                url.path(),
+                query,
+                body
+            ),
+            None => format!("{}{}{}{}", timestamp, method.as_str(), url.path(), body),
+        };
+
+        let signature = encode(hmac::sign(&signed_key, sign_message.as_bytes()).as_ref());
+        (self.ak.as_str(), signature)
+    }
+
+    pub async fn login_request(&self, websocket: &mut WebSocket)->Result<i32, SocketError>{
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct LoginArgs {
+            api_key: String,
+            passphrase: String,
+            timestamp: String,
+            sign: String,
+        }
+
+        let timestamp = Utc::now().timestamp().to_string();
+        let (key, sign) = self.signature(
+            http::Method::GET,
+            &timestamp,
+            &Url::parse("https://example.com/users/self/verify").unwrap(), // the domain name doesn't matter
+            "",
+        );
+        let _ = websocket
+            .send(WsMessage::Text(
+                json!({
+                    "op": "login",
+                    "args": vec![LoginArgs{
+                        api_key: key.into(),
+                        passphrase: self.pwd.to_string(),
+                        timestamp: timestamp,
+                        sign: sign,
+                    }],
+                })
+                .to_string(),
+            ))
+            .await?;
+        let response = match websocket.next().await {
+            Some(message) => message,
+            None => {
+                return Err(SocketError::Subscribe(
+                    "WebSocket stream okx login failed".to_string(),
+                ));
+            }
+        };
+        println!("-------------- {:?}", response);
+        Ok(666)
+    }
 }
 
 #[cfg(test)]

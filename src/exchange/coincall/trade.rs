@@ -140,6 +140,8 @@ mod tests {
     use super::*;
 
     mod de {
+        use crate::exchange::okx::trade::{OkxTrade, OkxTrades};
+
         use super::*;
         use barter_integration::{de::datetime_utc_from_epoch_duration, error::SocketError};
         use std::time::Duration;

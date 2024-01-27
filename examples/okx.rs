@@ -1,3 +1,6 @@
+use fehler::throws;
+use anyhow::Error;
+
 use barter_data::{
     event::{DataKind, MarketEvent},
     exchange::{
@@ -5,7 +8,7 @@ use barter_data::{
         kraken::Kraken,
         okx::Okx,
     },
-    streams::Streams,
+    streams::{builder::Signer, Streams},
     subscription::{
         book::{OrderBooksL1, OrderBooksL2},
         option_summary::OptionSummaries,
@@ -13,12 +16,15 @@ use barter_data::{
     },
 };
 use barter_integration::model::instrument::kind::InstrumentKind;
+use dotenv::var;
 use tokio_stream::StreamExt;
 use tracing::info;
 
 #[rustfmt::skip]
+#[throws(Error)]
 #[tokio::main]
-async fn main() {
+async fn main(){
+    dotenv::dotenv().ok();
     // Initialise INFO Tracing log subscriber
     init_logging();
 
@@ -28,14 +34,19 @@ async fn main() {
     //   Subscriptions passed.
 
     // Initialise MarketEvent<DataKind> Streams for various exchanges
-    let okx = Okx::new("","","");
-    let streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
 
+    let signer = Signer::new(
+        &var("OKEX_KEY")?,
+        &var("OKEX_SECRET")?,
+        &var("OKEX_PASSPHRASE")?,
+    );
+    let streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
     .add(Streams::<OptionSummaries>::builder()
+        .signer(Some(signer))
         .subscribe([
-    // (Okx, "btc", "usd", InstrumentKind::Spot, OptionSummaries),
-    (okx, "eth", "usd", InstrumentKind::Spot, OptionSummaries),
-    ])
+            // (Okx, "btc", "usd", InstrumentKind::Spot, OptionSummaries),
+            (Okx, "eth", "usd", InstrumentKind::Spot, OptionSummaries),
+        ])
     )
         .init()
         .await

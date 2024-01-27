@@ -95,6 +95,7 @@ use barter_integration::{
     ExchangeStream,
 };
 use futures::{SinkExt, Stream, StreamExt};
+use streams::builder::Signer;
 use tokio::sync::mpsc;
 use tracing::{debug, error};
 
@@ -152,7 +153,7 @@ where
     Exchange: Connector,
     Kind: SubKind,
 {
-    async fn init(subscriptions: &[Subscription<Exchange, Kind>]) -> Result<Self, DataError>
+    async fn init(signer: &Option<Signer>, subscriptions: &[Subscription<Exchange, Kind>]) -> Result<Self, DataError>
     where
         Subscription<Exchange, Kind>: Identifier<Exchange::Channel> + Identifier<Exchange::Market>;
 }
@@ -165,12 +166,12 @@ where
     Transformer: ExchangeTransformer<Exchange, Kind> + Send,
     Kind::Event: Send,
 {
-    async fn init(subscriptions: &[Subscription<Exchange, Kind>]) -> Result<Self, DataError>
+    async fn init(signer: &Option<Signer>, subscriptions: &[Subscription<Exchange, Kind>]) -> Result<Self, DataError>
     where
         Subscription<Exchange, Kind>: Identifier<Exchange::Channel> + Identifier<Exchange::Market>,
     {
         // Connect & subscribe
-        let (websocket, map) = Exchange::Subscriber::subscribe(subscriptions).await?;
+        let (websocket, map) = Exchange::Subscriber::subscribe(signer, subscriptions).await?;
 
         // Split WebSocket into WsStream & WsSink components
         let (ws_sink, ws_stream) = websocket.split();
