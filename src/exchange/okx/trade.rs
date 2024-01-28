@@ -121,17 +121,21 @@ fn de_okx_message_arg_as_subscription_id<'de, D>(
 where
     D: serde::de::Deserializer<'de>,
 {
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Debug)]
     #[serde(rename_all = "camelCase")]
     struct Arg<'a> {
         channel: &'a str,
         inst_id: Option<&'a str>,
         inst_family: Option<&'a str>,
+        uid: Option<&'a str>,
     }
 
-    Deserialize::deserialize(deserializer).map(|arg: Arg<'_>| match arg.inst_family {
-        None => ExchangeSub::from((arg.channel, arg.inst_id.unwrap())).id(),
-        _ => ExchangeSub::from((arg.channel, arg.inst_family.unwrap())).id(),
+    Deserialize::deserialize(deserializer).map(|arg: Arg<'_>| match arg.channel {
+        "balance_and_position" => ExchangeSub::from((arg.channel, arg.uid.unwrap())).id(),
+        "opt-summary" => ExchangeSub::from((arg.channel, arg.inst_family.unwrap())).id(),
+        _ => {
+            ExchangeSub::from((arg.channel, arg.inst_id.unwrap())).id()
+        }
     })
 }
 

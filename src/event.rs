@@ -1,12 +1,9 @@
 use crate::{
     error::DataError,
     subscription::{
-        book::{OrderBook, OrderBookL1},
-        candle::Candle,
-        liquidation::Liquidation,
-        mark_price::MarkPrice,
-        option_summary::OptionSummary,
-        trade::PublicTrade,
+        account::Account, book::{OrderBook, OrderBookL1}, candle::Candle, liquidation::Liquidation,
+        mark_price::MarkPrice, option_summary::OptionSummary, trade::PublicTrade,
+        balance::Balance, position::Position, greek::Greek
     },
 };
 use barter_integration::model::{instrument::Instrument, Exchange};
@@ -62,8 +59,28 @@ pub enum DataKind {
     OrderBook(OrderBook),
     Candle(Candle),
     Liquidation(Liquidation),
+
     MarkPrice(MarkPrice),
     OptionSummary(OptionSummary),
+
+    Account(Account),
+    Balance(Balance),
+    Greek(Greek),
+    Position(Position),
+}
+
+impl DataKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DataKind::Trade(_) => "trade",
+            DataKind::OrderBook(_) => "orderbook",
+            DataKind::MarkPrice(_) => "mark",
+            DataKind::Account(_) => "account",
+            DataKind::Balance(_) => "balance_and_position",
+            DataKind::OptionSummary(_) => "opt-summary",
+            _ => ""
+        }
+    }
 }
 
 impl From<MarketEvent<PublicTrade>> for MarketEvent<DataKind> {
@@ -146,6 +163,18 @@ impl From<MarketEvent<OptionSummary>> for MarketEvent<DataKind> {
             exchange: event.exchange,
             instrument: event.instrument,
             kind: DataKind::OptionSummary(event.kind),
+        }
+    }
+}
+
+impl From<MarketEvent<Balance>> for MarketEvent<DataKind> {
+    fn from(event: MarketEvent<Balance>) -> Self {
+        Self {
+            exchange_time: event.exchange_time,
+            received_time: event.received_time,
+            exchange: event.exchange,
+            instrument: event.instrument,
+            kind: DataKind::Balance(event.kind),
         }
     }
 }

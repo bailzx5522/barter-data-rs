@@ -9,11 +9,10 @@ use async_trait::async_trait;
 use barter_integration::{
     error::SocketError,
     model::instrument::Instrument,
-    protocol::websocket::{connect, WebSocket, WsMessage},
+    protocol::websocket::{connect, WebSocket},
 };
 use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use tracing::{debug, info};
 
 /// [`SubscriptionMapper`](mapper::SubscriptionMapper) implementations defining how to map a
@@ -105,8 +104,19 @@ impl Subscriber for WebSocketSubscriberWithLogin {
         Subscription<Exchange, Kind>: Identifier<Exchange::Channel> + Identifier<Exchange::Market>,
     {
         // Define variables for logging ergonomics
+        let mut is_private = false;
+        let s = signer;
+        match s {
+            Some(s) => {
+                is_private = true;
+            },
+            None=>{}
+        };
         let exchange = Exchange::ID;
-        let url = Exchange::url()?;
+        let mut url = Exchange::url()?;
+        if is_private == true{
+            url = Exchange::private_url()?;
+        }
         debug!(%exchange, %url, ?subscriptions, "subscribing to WebSocket");
 
         // Connect to exchange

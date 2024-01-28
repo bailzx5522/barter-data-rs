@@ -1,8 +1,7 @@
 use super::Okx;
 use crate::{
     subscription::{
-        book::OrderBooksL1, mark_price::MarkPrices, option_summary::OptionSummaries,
-        trade::PublicTrades, Subscription,
+        balance::Balances, book::OrderBooksL1, mark_price::MarkPrices, option_summary::OptionSummaries, trade::PublicTrades, Subscription
     },
     Identifier,
 };
@@ -24,6 +23,7 @@ impl OkxChannel {
     pub const ORDER_BOOK_L1: Self = Self("tickers");
     pub const MARK_PRICE: Self = Self("mark-price");
     pub const OPTION_SUMMARY: Self = Self("opt-summary");
+    pub const BALANCE: Self = Self("balance_and_position");
 }
 
 impl Identifier<OkxChannel> for Subscription<Okx, PublicTrades> {
@@ -47,6 +47,12 @@ impl Identifier<OkxChannel> for Subscription<Okx, MarkPrices> {
 impl Identifier<OkxChannel> for Subscription<Okx, OptionSummaries> {
     fn id(&self) -> OkxChannel {
         OkxChannel::OPTION_SUMMARY
+    }
+}
+
+impl Identifier<OkxChannel> for Subscription<Okx, Balances> {
+    fn id(&self) -> OkxChannel {
+        OkxChannel::BALANCE
     }
 }
 

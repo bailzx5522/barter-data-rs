@@ -31,6 +31,12 @@ pub mod mark_price;
 /// option summary [`SubKind`] and the associated Barter output data model.
 pub mod option_summary;
 
+// private subs
+pub mod account;
+pub mod balance;
+pub mod greek;
+pub mod position;
+
 /// Defines the type of a [`Subscription`], and the output [`Self::Event`] that it yields.
 pub trait SubKind
 where

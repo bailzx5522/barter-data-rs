@@ -114,6 +114,9 @@ where
 
     /// Base [`Url`] of the exchange server being connected with.
     fn url() -> Result<Url, SocketError>;
+    fn private_url() -> Result<Url, SocketError>{
+        Self::url()
+    }
 
     /// Defines [`PingInterval`] of custom application-level
     /// [`WebSocket`](barter_integration::protocol::websocket::WebSocket) pings for the exchange
@@ -140,8 +143,6 @@ where
     fn subscription_timeout() -> Duration {
         DEFAULT_SUBSCRIPTION_TIMEOUT
     }
-
-    fn login_request(&self) {}
 }
 
 /// Used when an exchange has servers different
@@ -260,9 +261,4 @@ impl ExchangeId {
             (_, Option(_)) => false,
         }
     }
-}
-pub trait Login {
-    fn login_request();
-    fn sign();
-    fn signature();
 }

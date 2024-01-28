@@ -54,12 +54,16 @@ pub struct OkxTicker {
     #[serde(rename = "instId")]
     pub inst_id: String,
     #[serde(rename = "askPx", deserialize_with = "barter_integration::de::de_str")]
+    #[serde(default)]
     pub ask_px: f64,
     #[serde(rename = "askSz", deserialize_with = "barter_integration::de::de_str")]
+    #[serde(default)]
     pub ask_sz: f64,
     #[serde(rename = "bidPx", deserialize_with = "barter_integration::de::de_str")]
+    #[serde(default)]
     pub bid_px: f64,
     #[serde(rename = "bidSz", deserialize_with = "barter_integration::de::de_str")]
+    #[serde(default)]
     pub bid_sz: f64,
 }
 
