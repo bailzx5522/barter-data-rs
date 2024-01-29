@@ -1,8 +1,12 @@
-use super::trade::OkxMessage;
+use super::{balance::OkxBalances, trade::OkxMessage};
 use crate::{
     event::{MarketEvent, MarketIter},
     exchange::{subscription::ExchangeSub, ExchangeId},
-    subscription::book::{Level, OrderBookL1},
+    subscription::{
+        balance::Balance,
+        book::{Level, OrderBookL1},
+        pong::Pong,
+    },
     Identifier,
 };
 
@@ -89,6 +93,78 @@ impl From<(ExchangeId, Instrument, OkxOrderBookL1)> for MarketIter<OrderBookL1> 
                             price: book.ask_px,
                             amount: book.ask_sz,
                         },
+                    },
+                })
+            })
+            .collect()
+    }
+}
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct OkxPong {}
+
+pub type OkxPongs = OkxPongMessage<OkxPong>;
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
+pub struct OkxPongMessage<T> {
+    #[serde(
+        rename = "arg",
+        deserialize_with = "de_okx_message_arg_as_subscription_id"
+    )]
+    pub subscription_id: SubscriptionId,
+    pub data: Vec<T>,
+    pub message: String,
+}
+
+impl<T> Identifier<Option<SubscriptionId>> for OkxPongMessage<T> {
+    fn id(&self) -> Option<SubscriptionId> {
+        println!("----------------okx sub id");
+        Some(self.subscription_id.clone())
+    }
+}
+
+/// Deserialize an [`OkxMessage`] "arg" field as a Barter [`SubscriptionId`].
+fn de_okx_message_arg_as_subscription_id<'de, D>(
+    deserializer: D,
+) -> Result<SubscriptionId, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    println!("----------------okx message de sub id");
+    #[derive(Deserialize, Debug)]
+    #[serde(rename_all = "camelCase")]
+    struct Arg<'a> {
+        channel: &'a str,
+        inst_id: Option<&'a str>,
+        inst_family: Option<&'a str>,
+        uid: Option<&'a str>,
+    }
+
+    Deserialize::deserialize(deserializer).map(|arg: Arg<'_>| match arg.channel {
+        "balance_and_position" => ExchangeSub::from((arg.channel, arg.uid.unwrap())).id(),
+        "opt-summary" => ExchangeSub::from((arg.channel, arg.inst_family.unwrap())).id(),
+        _ => ExchangeSub::from((arg.channel, arg.inst_id.unwrap())).id(),
+    })
+}
+
+impl From<(ExchangeId, Instrument, OkxPongs)> for MarketIter<Pong> {
+    fn from((exchange_id, instrument, pongs): (ExchangeId, Instrument, OkxPongs)) -> Self {
+        println!("----------------okx from ");
+        pongs
+            .data
+            .into_iter()
+            .map(|bal| {
+                Ok(MarketEvent {
+                    exchange_time: Utc::now(),
+                    received_time: Utc::now(),
+                    exchange: Exchange::from(exchange_id),
+                    instrument: instrument.clone(),
+                    kind: Pong {
+                        // p_time: bal.p_time,
+                        // event_type: bal.event_type,
+                        // bal_data: todo!(),
+                        // pos_data: todo!(),
+                        // trades: todo!(),
                     },
                 })
             })

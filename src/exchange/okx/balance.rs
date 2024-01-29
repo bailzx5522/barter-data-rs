@@ -3,7 +3,9 @@ use crate::{
     event::{MarketEvent, MarketIter},
     exchange::{subscription::ExchangeSub, ExchangeId},
     subscription::{
-        balance::{Balance, Balances}, book::{Level, OrderBookL1}, mark_price::{MarkPrice, MarkPrices}
+        balance::{Balance, Balances},
+        book::{Level, OrderBookL1},
+        mark_price::{MarkPrice, MarkPrices},
     },
     Identifier,
 };

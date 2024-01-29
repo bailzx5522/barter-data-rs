@@ -1,18 +1,27 @@
+use anyhow::Error;
 use chrono::{TimeZone, Utc};
 use fehler::throws;
-use anyhow::Error;
 
 use barter_data::{
     event::{DataKind, MarketEvent},
     exchange::{
-        self, binance::{futures::BinanceFuturesUsd, spot::BinanceSpot}, kraken::Kraken, okx::Okx
+        self,
+        binance::{futures::BinanceFuturesUsd, spot::BinanceSpot},
+        kraken::Kraken,
+        okx::Okx,
     },
     streams::{builder::Signer, Streams},
     subscription::{
-        balance::Balances, book::{OrderBooksL1, OrderBooksL2}, option_summary::OptionSummaries, position::Position, trade::PublicTrades
+        balance::Balances,
+        book::{OrderBooksL1, OrderBooksL2},
+        option_summary::OptionSummaries,
+        position::Position,
+        trade::PublicTrades,
     },
 };
-use barter_integration::model::instrument::kind::{InstrumentKind, OptionContract, OptionExercise, OptionKind};
+use barter_integration::model::instrument::kind::{
+    InstrumentKind, OptionContract, OptionExercise, OptionKind,
+};
 use dotenv::var;
 use tokio_stream::StreamExt;
 use tracing::info;
@@ -67,7 +76,7 @@ async fn main(){
     .add(Streams::<OrderBooksL1>::builder()
         .subscribe([
             // (Okx, "btc", "usd", InstrumentKind::Spot, OptionSummaries),
-            (Okx, "btc", "usd", InstrumentKind::Option(call_contract2(1708646400000)), OrderBooksL1),
+            // (Okx, "btc", "usd", InstrumentKind::Option(call_contract2(1708646400000)), OrderBooksL1),
             (Okx, "eth", "usd", InstrumentKind::Option(call_contract1(1708646400000)), OrderBooksL1),
 
         ])
@@ -102,11 +111,12 @@ async fn main(){
                 DataKind::MarkPrice(mark) => {
                     info!("Exchange: {exchange}, mark price update: {mark:?}");
                 }
-                DataKind::OrderBookL1(mark) => {
-                    info!("Exchange: {exchange},inst_id:{}, ask:{}, bid:{}",data.instrument, mark.best_ask.price, mark.best_bid.price );
+                DataKind::OrderBookL1(bbo) => {
+                    info!("Exchange: {exchange},inst_id:{}, ask:{}, bid:{}",data.instrument, bbo.best_ask.price, bbo.best_bid.price );
                 }
 
                 DataKind::OptionSummary(opt) => {
+                    opt.inst_id == ""
                     // info!("Exchange: {exchange}, option update");
                 }
                 _ => {
@@ -140,7 +150,7 @@ fn call_contract1(ts: i64) -> OptionContract {
         kind: OptionKind::Put,
         exercise: OptionExercise::American,
         expiry: Utc.timestamp_millis_opt(ts).unwrap(),
-        strike: rust_decimal_macros::dec!(2000),
+        strike: rust_decimal_macros::dec!(2500),
     }
 }
 

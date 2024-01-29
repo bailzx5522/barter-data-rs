@@ -1,5 +1,8 @@
+use self::ticker::{OkxPong, OkxPongs};
 use self::{
-    balance::OkxBalances, channel::OkxChannel, mark::OkxMarkPrices, market::OkxMarket, option_summary::OkxOptionSummaries, subscription::OkxSubResponse, ticker::OkxOrderBookL1, trade::OkxTrades
+    balance::OkxBalances, channel::OkxChannel, mark::OkxMarkPrices, market::OkxMarket,
+    option_summary::OkxOptionSummaries, subscription::OkxSubResponse, ticker::OkxOrderBookL1,
+    trade::OkxTrades,
 };
 use crate::{
     exchange::{Connector, ExchangeId, ExchangeSub, PingInterval, StreamSelector},
@@ -7,15 +10,20 @@ use crate::{
         validator::WebSocketSubValidator, WebSocketSubscriber, WebSocketSubscriberWithLogin,
     },
     subscription::{
-        balance::Balances, book::OrderBooksL1, mark_price::MarkPrices, option_summary::OptionSummaries, trade::PublicTrades
+        balance::Balances,
+        book::OrderBooksL1,
+        mark_price::MarkPrices,
+        option_summary::OptionSummaries,
+        pong::{Pong, Pongs},
+        trade::PublicTrades,
     },
     transformer::stateless::StatelessTransformer,
-    ExchangeWsStream,
+    ExchangeWsStream, Identifier,
 };
-use barter_integration::{error::SocketError, protocol::websocket::WsMessage};
+use barter_integration::{
+    error::SocketError, model::SubscriptionId, protocol::websocket::WsMessage,
+};
 use barter_macro::{DeExchange, SerExchange};
-use futures::{SinkExt, StreamExt};
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::time::Duration;
 use url::Url;
@@ -55,7 +63,9 @@ pub const PING_INTERVAL_OKX: Duration = Duration::from_secs(29);
 /// [`Okx`] exchange.
 ///
 /// See docs: <https://www.okx.com/docs-v5/en/#websocket-api>
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, DeExchange, SerExchange)]
+#[derive(
+    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, DeExchange, SerExchange,
+)]
 pub struct Okx;
 
 impl Connector for Okx {
@@ -108,4 +118,8 @@ impl StreamSelector<OptionSummaries> for Okx {
 
 impl StreamSelector<Balances> for Okx {
     type Stream = ExchangeWsStream<StatelessTransformer<Self, Balances, OkxBalances>>;
+}
+
+impl StreamSelector<Pongs> for Okx {
+    type Stream = ExchangeWsStream<StatelessTransformer<Self, Pongs, OkxPongs>>;
 }

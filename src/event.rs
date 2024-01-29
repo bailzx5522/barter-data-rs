@@ -1,9 +1,18 @@
 use crate::{
     error::DataError,
     subscription::{
-        account::Account, book::{OrderBook, OrderBookL1}, candle::Candle, liquidation::Liquidation,
-        mark_price::MarkPrice, option_summary::OptionSummary, trade::PublicTrade,
-        balance::Balance, position::Position, greek::Greek
+        account::Account,
+        balance::Balance,
+        book::{OrderBook, OrderBookL1},
+        candle::Candle,
+        greek::Greek,
+        liquidation::Liquidation,
+        mark_price::MarkPrice,
+        option_summary::OptionSummary,
+        pong::Pong,
+        position::Position,
+        trade::PublicTrade,
+        SubKind,
     },
 };
 use barter_integration::model::{instrument::Instrument, Exchange};
@@ -54,6 +63,7 @@ pub struct MarketEvent<T> {
 ///   [`MarketEvent<T>`](MarketEvent) kinds.
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum DataKind {
+    Pong(Pong),
     Trade(PublicTrade),
     OrderBookL1(OrderBookL1),
     OrderBook(OrderBook),
@@ -78,7 +88,7 @@ impl DataKind {
             DataKind::Account(_) => "account",
             DataKind::Balance(_) => "balance_and_position",
             DataKind::OptionSummary(_) => "opt-summary",
-            _ => ""
+            _ => "",
         }
     }
 }
@@ -91,6 +101,19 @@ impl From<MarketEvent<PublicTrade>> for MarketEvent<DataKind> {
             exchange: event.exchange,
             instrument: event.instrument,
             kind: DataKind::Trade(event.kind),
+        }
+    }
+}
+
+impl From<MarketEvent<Pong>> for MarketEvent<DataKind> {
+    fn from(event: MarketEvent<Pong>) -> Self {
+        println!("------------------- from {:?}", event);
+        Self {
+            exchange_time: event.exchange_time,
+            received_time: event.received_time,
+            exchange: event.exchange,
+            instrument: event.instrument,
+            kind: DataKind::Pong(event.kind),
         }
     }
 }

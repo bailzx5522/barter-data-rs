@@ -52,3 +52,4 @@ ta = "0.5.0"
 
 # Misc
 chrono = {version = "0.4.21", features = ["serde"]}
+backtrace = "0.3.69"

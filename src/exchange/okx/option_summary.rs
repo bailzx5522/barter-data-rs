@@ -1,6 +1,8 @@
 use super::trade::OkxMessage;
 use crate::{
-    event::{MarketEvent, MarketIter}, exchange::ExchangeId, subscription::option_summary::{OptionSummaries, OptionSummary}
+    event::{MarketEvent, MarketIter},
+    exchange::ExchangeId,
+    subscription::option_summary::{OptionSummaries, OptionSummary},
 };
 
 use barter_integration::model::{instrument::Instrument, Exchange, SubscriptionId};
@@ -71,6 +73,24 @@ pub struct OkxOptionSummary {
     #[serde(rename = "vega", deserialize_with = "barter_integration::de::de_str")]
     pub vega: f64,
 
+    #[serde(
+        rename = "deltaBS",
+        deserialize_with = "barter_integration::de::de_str"
+    )]
+    pub delta_bs: f64,
+    #[serde(
+        rename = "gammaBS",
+        deserialize_with = "barter_integration::de::de_str"
+    )]
+    pub gamma_bs: f64,
+    #[serde(
+        rename = "thetaBS",
+        deserialize_with = "barter_integration::de::de_str"
+    )]
+    pub theta_bs: f64,
+    #[serde(rename = "vegaBS", deserialize_with = "barter_integration::de::de_str")]
+    pub vega_bs: f64,
+
     #[serde(rename = "volLv", deserialize_with = "barter_integration::de::de_str")]
     pub atm_vol: f64,
 
@@ -107,6 +127,7 @@ impl From<(ExchangeId, Instrument, OkxOptionSummaries)> for MarketIter<OptionSum
                     kind: OptionSummary {
                         inst_id: option.inst_id,
                         underlying: option.underlying,
+                        // use black scholes model
                         delta: option.delta,
                         gamma: option.gamma,
                         theta: option.theta,
