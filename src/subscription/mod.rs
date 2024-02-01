@@ -35,7 +35,6 @@ pub mod option_summary;
 pub mod account;
 pub mod balance;
 pub mod greek;
-pub mod pong;
 pub mod position;
 
 /// Defines the type of a [`Subscription`], and the output [`Self::Event`] that it yields.

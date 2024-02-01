@@ -3,6 +3,7 @@ use crate::{
     event::{MarketEvent, MarketIter},
     exchange::{subscription::ExchangeSub, ExchangeId},
     subscription::{
+        account::{Account, Accounts},
         balance::{Balance, BalanceData, Balances, PositionData, Trade},
         book::{Level, OrderBookL1},
         mark_price::{MarkPrice, MarkPrices},
@@ -143,7 +144,48 @@ impl From<(ExchangeId, Instrument, OkxPositions)> for MarketIter<Positions> {
                     received_time: Utc::now(),
                     exchange: Exchange::from(exchange_id),
                     instrument: instrument.clone(),
-                    kind: Position {},
+                    kind: Position {
+                        ccy: todo!(),
+                        c_time: todo!(),
+                        inst_id: todo!(),
+                        pos_side: todo!(),
+                    },
+                })
+            })
+            .collect()
+    }
+}
+
+pub type OkxAccounts = OkxMessage<OkxAccount>;
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OkxAccount {
+    #[serde(
+        rename = "pTime",
+        deserialize_with = "barter_integration::de::de_str_u64_epoch_ms_as_datetime_utc"
+    )]
+    pub ts: DateTime<Utc>,
+}
+
+// 实现从(ExchangId, Inst, OKxOrderBook) 转换成 MarketIter<>
+impl From<(ExchangeId, Instrument, OkxAccounts)> for MarketIter<Accounts> {
+    fn from((exchange_id, instrument, accounts): (ExchangeId, Instrument, OkxAccounts)) -> Self {
+        accounts
+            .data
+            .into_iter()
+            .map(|account| {
+                Ok(MarketEvent {
+                    exchange_time: account.ts,
+                    received_time: Utc::now(),
+                    exchange: Exchange::from(exchange_id),
+                    instrument: instrument.clone(),
+                    kind: Account {
+                        total_eq: todo!(),
+                        imr: todo!(),
+                        mmr: todo!(),
+                        u_time: todo!(),
+                    },
                 })
             })
             .collect()

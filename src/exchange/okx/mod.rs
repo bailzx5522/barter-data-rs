@@ -1,4 +1,4 @@
-use self::balance::OkxPositions;
+use self::balance::{OkxAccounts, OkxPositions};
 use self::ticker::{OkxPong, OkxPongs};
 use self::{
     balance::OkxBalances, channel::OkxChannel, mark::OkxMarkPrices, market::OkxMarket,
@@ -13,12 +13,8 @@ use crate::{
         validator::WebSocketSubValidator, WebSocketSubscriber, WebSocketSubscriberWithLogin,
     },
     subscription::{
-        balance::Balances,
-        book::OrderBooksL1,
-        mark_price::MarkPrices,
-        option_summary::OptionSummaries,
-        pong::{Pong, Pongs},
-        trade::PublicTrades,
+        balance::Balances, book::OrderBooksL1, mark_price::MarkPrices,
+        option_summary::OptionSummaries, trade::PublicTrades,
     },
     transformer::stateless::StatelessTransformer,
     ExchangeWsStream, Identifier,

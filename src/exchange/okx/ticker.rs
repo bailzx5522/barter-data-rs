@@ -2,11 +2,7 @@ use super::{balance::OkxBalances, trade::OkxMessage};
 use crate::{
     event::{MarketEvent, MarketIter},
     exchange::{subscription::ExchangeSub, ExchangeId},
-    subscription::{
-        balance::Balance,
-        book::{Level, OrderBookL1},
-        pong::Pong,
-    },
+    subscription::book::{Level, OrderBookL1},
     Identifier,
 };
 
@@ -100,28 +96,6 @@ impl From<(ExchangeId, Instrument, OkxOrderBookL1)> for MarketIter<OrderBookL1> 
     }
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct OkxPong {}
-
-pub type OkxPongs = OkxPongMessage<OkxPong>;
-
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-pub struct OkxPongMessage<T> {
-    #[serde(
-        rename = "arg",
-        deserialize_with = "de_okx_message_arg_as_subscription_id"
-    )]
-    pub subscription_id: SubscriptionId,
-    pub data: Vec<T>,
-    pub message: String,
-}
-
-impl<T> Identifier<Option<SubscriptionId>> for OkxPongMessage<T> {
-    fn id(&self) -> Option<SubscriptionId> {
-        Some(self.subscription_id.clone())
-    }
-}
-
 /// Deserialize an [`OkxMessage`] "arg" field as a Barter [`SubscriptionId`].
 fn de_okx_message_arg_as_subscription_id<'de, D>(
     deserializer: D,
@@ -143,28 +117,4 @@ where
         "opt-summary" => ExchangeSub::from((arg.channel, arg.inst_family.unwrap())).id(),
         _ => ExchangeSub::from((arg.channel, arg.inst_id.unwrap())).id(),
     })
-}
-
-impl From<(ExchangeId, Instrument, OkxPongs)> for MarketIter<Pong> {
-    fn from((exchange_id, instrument, pongs): (ExchangeId, Instrument, OkxPongs)) -> Self {
-        pongs
-            .data
-            .into_iter()
-            .map(|bal| {
-                Ok(MarketEvent {
-                    exchange_time: Utc::now(),
-                    received_time: Utc::now(),
-                    exchange: Exchange::from(exchange_id),
-                    instrument: instrument.clone(),
-                    kind: Pong {
-                        // p_time: bal.p_time,
-                        // event_type: bal.event_type,
-                        // bal_data: todo!(),
-                        // pos_data: todo!(),
-                        // trades: todo!(),
-                    },
-                })
-            })
-            .collect()
-    }
 }

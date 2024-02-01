@@ -9,7 +9,6 @@ use crate::{
         liquidation::Liquidation,
         mark_price::MarkPrice,
         option_summary::OptionSummary,
-        pong::Pong,
         position::Position,
         trade::PublicTrade,
         SubKind,
@@ -63,7 +62,6 @@ pub struct MarketEvent<T> {
 ///   [`MarketEvent<T>`](MarketEvent) kinds.
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum DataKind {
-    Pong(Pong),
     Trade(PublicTrade),
     OrderBookL1(OrderBookL1),
     OrderBook(OrderBook),
@@ -102,18 +100,6 @@ impl From<MarketEvent<PublicTrade>> for MarketEvent<DataKind> {
             exchange: event.exchange,
             instrument: event.instrument,
             kind: DataKind::Trade(event.kind),
-        }
-    }
-}
-
-impl From<MarketEvent<Pong>> for MarketEvent<DataKind> {
-    fn from(event: MarketEvent<Pong>) -> Self {
-        Self {
-            exchange_time: event.exchange_time,
-            received_time: event.received_time,
-            exchange: event.exchange,
-            instrument: event.instrument,
-            kind: DataKind::Pong(event.kind),
         }
     }
 }
@@ -198,6 +184,18 @@ impl From<MarketEvent<Balance>> for MarketEvent<DataKind> {
             exchange: event.exchange,
             instrument: event.instrument,
             kind: DataKind::Balance(event.kind),
+        }
+    }
+}
+
+impl From<MarketEvent<Account>> for MarketEvent<DataKind> {
+    fn from(event: MarketEvent<Account>) -> Self {
+        Self {
+            exchange_time: event.exchange_time,
+            received_time: event.received_time,
+            exchange: event.exchange,
+            instrument: event.instrument,
+            kind: DataKind::Account(event.kind),
         }
     }
 }
