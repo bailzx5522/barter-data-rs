@@ -6,18 +6,24 @@ use crate::{
     subscription::{Map, SubKind, Subscription},
     Identifier,
 };
-use barter_integration::{error::SocketError, model::instrument::Instrument, protocol::{websocket::{WebSocket, WsMessage}}, Validator};
+use barter_integration::{
+    error::SocketError,
+    model::instrument::Instrument,
+    protocol::websocket::{WebSocket, WsMessage},
+    Validator,
+};
 use base64::encode;
-use http::Method;
-use ring::hmac;
 use chrono::Utc;
 use futures::SinkExt;
+use http::Method;
+use ring::hmac;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tokio_stream::StreamExt;
-use url::Url;
 use std::{collections::HashMap, fmt::Debug, future::Future, pin::Pin, string};
 use tokio::sync::mpsc;
+use tokio_stream::StreamExt;
+use tracing::debug;
+use url::Url;
 
 /// Defines the [`MultiStreamBuilder`](multi::MultiStreamBuilder) API for ergonomically
 /// initialising a common [`Streams<Output>`](Streams) from multiple
@@ -37,8 +43,7 @@ where
 {
     pub channels: HashMap<ExchangeId, ExchangeChannel<MarketEvent<Kind::Event>>>,
     pub futures: Vec<SubscribeFuture>,
-    pub signer : Option<Signer>,
-
+    pub signer: Option<Signer>,
 }
 
 impl<Kind> Debug for StreamBuilder<Kind>
@@ -53,8 +58,6 @@ where
     }
 }
 
-
-
 impl<Kind> StreamBuilder<Kind>
 where
     Kind: SubKind,
@@ -64,14 +67,11 @@ where
         Self {
             channels: HashMap::new(),
             futures: Vec::new(),
-            signer: None
-       }
+            signer: None,
+        }
     }
 
-    pub fn signer(
-        mut self,
-        signer: Option<Signer>,
-    ) -> Self {
+    pub fn signer(mut self, signer: Option<Signer>) -> Self {
         self.signer = signer;
         self
     }
@@ -184,22 +184,21 @@ where
 }
 
 #[derive(Clone, Debug)]
-pub struct Signer{
+pub struct Signer {
     pub ak: String,
     pub sk: String,
     pub pwd: String,
-
 }
 
-impl Signer{
-    pub fn new(ak: &str, sk: &str, pwd: &str)-> Self{
-        Self{
-            ak:ak.into(),
-            sk : sk.into(),
-            pwd: pwd.into()
+impl Signer {
+    pub fn new(ak: &str, sk: &str, pwd: &str) -> Self {
+        Self {
+            ak: ak.into(),
+            sk: sk.into(),
+            pwd: pwd.into(),
         }
     }
-    pub fn sign(){}
+    pub fn sign() {}
 
     pub fn signature(
         &self,
@@ -226,7 +225,7 @@ impl Signer{
         (self.ak.as_str(), signature)
     }
 
-    pub async fn login_request(&self, websocket: &mut WebSocket)->Result<i32, SocketError>{
+    pub async fn login_request(&self, websocket: &mut WebSocket) -> Result<i32, SocketError> {
         #[derive(Debug, Clone, Serialize, Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct LoginArgs {
@@ -265,7 +264,7 @@ impl Signer{
                 ));
             }
         };
-        println!("-------------- {:?}", response);
+        debug!("-------------- login response:{:?}", response);
         Ok(666)
     }
 }

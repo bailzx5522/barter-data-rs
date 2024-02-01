@@ -1,3 +1,5 @@
+use std::env::args;
+
 use crate::{
     event::{MarketEvent, MarketIter},
     exchange::{ExchangeId, ExchangeSub},
@@ -131,11 +133,9 @@ where
     }
 
     Deserialize::deserialize(deserializer).map(|arg: Arg<'_>| match arg.channel {
-        "balance_and_position" => ExchangeSub::from((arg.channel, arg.uid.unwrap())).id(),
+        "balance_and_position" => ExchangeSub::from((arg.channel, "B-P")).id(),
         "opt-summary" => ExchangeSub::from((arg.channel, arg.inst_family.unwrap())).id(),
-        _ => {
-            ExchangeSub::from((arg.channel, arg.inst_id.unwrap())).id()
-        }
+        _ => ExchangeSub::from((arg.channel, arg.inst_id.unwrap())).id(),
     })
 }
 

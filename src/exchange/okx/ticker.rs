@@ -118,7 +118,6 @@ pub struct OkxPongMessage<T> {
 
 impl<T> Identifier<Option<SubscriptionId>> for OkxPongMessage<T> {
     fn id(&self) -> Option<SubscriptionId> {
-        println!("----------------okx sub id");
         Some(self.subscription_id.clone())
     }
 }
@@ -130,7 +129,6 @@ fn de_okx_message_arg_as_subscription_id<'de, D>(
 where
     D: serde::de::Deserializer<'de>,
 {
-    println!("----------------okx message de sub id");
     #[derive(Deserialize, Debug)]
     #[serde(rename_all = "camelCase")]
     struct Arg<'a> {
@@ -149,7 +147,6 @@ where
 
 impl From<(ExchangeId, Instrument, OkxPongs)> for MarketIter<Pong> {
     fn from((exchange_id, instrument, pongs): (ExchangeId, Instrument, OkxPongs)) -> Self {
-        println!("----------------okx from ");
         pongs
             .data
             .into_iter()

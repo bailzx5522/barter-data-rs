@@ -1,9 +1,12 @@
+use self::balance::OkxPositions;
 use self::ticker::{OkxPong, OkxPongs};
 use self::{
     balance::OkxBalances, channel::OkxChannel, mark::OkxMarkPrices, market::OkxMarket,
     option_summary::OkxOptionSummaries, subscription::OkxSubResponse, ticker::OkxOrderBookL1,
     trade::OkxTrades,
 };
+use crate::subscription::account::Accounts;
+use crate::subscription::position::Positions;
 use crate::{
     exchange::{Connector, ExchangeId, ExchangeSub, PingInterval, StreamSelector},
     subscriber::{
@@ -120,6 +123,10 @@ impl StreamSelector<Balances> for Okx {
     type Stream = ExchangeWsStream<StatelessTransformer<Self, Balances, OkxBalances>>;
 }
 
-impl StreamSelector<Pongs> for Okx {
-    type Stream = ExchangeWsStream<StatelessTransformer<Self, Pongs, OkxPongs>>;
+impl StreamSelector<Accounts> for Okx {
+    type Stream = ExchangeWsStream<StatelessTransformer<Self, Accounts, OkxAccounts>>;
+}
+
+impl StreamSelector<Positions> for Okx {
+    type Stream = ExchangeWsStream<StatelessTransformer<Self, Positions, OkxPositions>>;
 }

@@ -3,9 +3,10 @@ use crate::{
     event::{MarketEvent, MarketIter},
     exchange::{subscription::ExchangeSub, ExchangeId},
     subscription::{
-        balance::{Balance, Balances},
+        balance::{Balance, BalanceData, Balances, PositionData, Trade},
         book::{Level, OrderBookL1},
         mark_price::{MarkPrice, MarkPrices},
+        position::{Position, Positions},
     },
     Identifier,
 };
@@ -54,19 +55,43 @@ pub type OkxBalances = OkxMessage<OkxBalance>;
 ///}]
 ///}
 /// ```
+///
+///
+///
+// #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
+// #[serde(rename_all = "camelCase")]
+// pub struct OkxPositionData {
+//     pub pos_id: String,
+//     #[serde(deserialize_with = "barter_integration::de::de_str")]
+//     pub avg_px: f64,
+//     #[serde(deserialize_with = "barter_integration::de::de_str")]
+//     pub base_bal: f64,
+//     pub ccy: String,
+//     pub inst_id: String,
+//     pub inst_type: String,
+//     pub mgn_mode: String,
+//     #[serde(deserialize_with = "barter_integration::de::de_str")]
+//     pub pos: f64,
+//     pub pos_ccy: String,
+//     pub pos_side: String,
+//     pub quote_bal: String,
+//     pub trade_id: String,
+//     #[serde(deserialize_with = "barter_integration::de::de_str")]
+//     pub u_time: i32,
+// }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OkxBalance {
     #[serde(
-        rename = "ts",
+        rename = "pTime",
         deserialize_with = "barter_integration::de::de_str_u64_epoch_ms_as_datetime_utc"
     )]
     pub ts: DateTime<Utc>,
-
-    pub p_time: String,
     pub event_type: String,
-    // pub bal_data: Vec<BalanceData>
+    pub bal_data: Vec<BalanceData>,
+    pub pos_data: Vec<PositionData>,
+    pub trades: Vec<Trade>,
 }
 
 // 实现从(ExchangId, Inst, OKxOrderBook) 转换成 MarketIter<>
@@ -82,12 +107,43 @@ impl From<(ExchangeId, Instrument, OkxBalances)> for MarketIter<Balance> {
                     exchange: Exchange::from(exchange_id),
                     instrument: instrument.clone(),
                     kind: Balance {
-                        p_time: bal.p_time,
+                        p_time: bal.ts.to_string(),
                         event_type: bal.event_type,
-                        // bal_data: todo!(),
-                        // pos_data: todo!(),
-                        // trades: todo!(),
+                        bal_data: bal.bal_data,
+                        pos_data: bal.pos_data,
+                        trades: bal.trades,
                     },
+                })
+            })
+            .collect()
+    }
+}
+
+pub type OkxPositions = OkxMessage<OkxPosition>;
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OkxPosition {
+    #[serde(
+        rename = "pTime",
+        deserialize_with = "barter_integration::de::de_str_u64_epoch_ms_as_datetime_utc"
+    )]
+    pub ts: DateTime<Utc>,
+}
+
+// 实现从(ExchangId, Inst, OKxOrderBook) 转换成 MarketIter<>
+impl From<(ExchangeId, Instrument, OkxPositions)> for MarketIter<Positions> {
+    fn from((exchange_id, instrument, positions): (ExchangeId, Instrument, OkxPositions)) -> Self {
+        positions
+            .data
+            .into_iter()
+            .map(|pos| {
+                Ok(MarketEvent {
+                    exchange_time: pos.ts,
+                    received_time: Utc::now(),
+                    exchange: Exchange::from(exchange_id),
+                    instrument: instrument.clone(),
+                    kind: Position {},
                 })
             })
             .collect()

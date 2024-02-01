@@ -13,33 +13,52 @@ impl SubKind for Balances {
     type Event = Balance;
 }
 
-/// Normalised Barter [`PublicTrade`] model.
+/// Normalised Barter [`balance_and_position`] model.
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Balance {
     pub p_time: String,
     pub event_type: String,
-    // pub bal_data: Vec<BalanceData>,
-    // pub pos_data: Vec<PositionData>,
-    // pub trades: Vec<Trade>
+    pub bal_data: Vec<BalanceData>,
+    pub pos_data: Vec<PositionData>,
+    pub trades: Vec<Trade>,
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct BalanceData{
-    pub ccy:String
+pub struct BalanceData {
+    pub ccy: String,
+    #[serde(deserialize_with = "barter_integration::de::de_str")]
+    pub cash_bal: f64,
+    #[serde(deserialize_with = "barter_integration::de::de_str")]
+    pub u_time: i64,
 }
 
+#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PositionData {
+    pub pos_id: String,
+    #[serde(deserialize_with = "barter_integration::de::de_str")]
+    pub avg_px: f64,
+    #[serde(deserialize_with = "barter_integration::de::de_str")]
+    pub base_bal: f64,
+    pub ccy: String,
+    pub inst_id: String,
+    pub inst_type: String,
+    pub mgn_mode: String,
+    #[serde(deserialize_with = "barter_integration::de::de_str")]
+    pub pos: f64,
+    pub pos_ccy: String,
+    pub pos_side: String,
+    pub quote_bal: String,
+    pub trade_id: String,
+    #[serde(deserialize_with = "barter_integration::de::de_str")]
+    pub u_time: i64,
+}
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct PositionData{
-    pub pos_id: String
-}
-
-#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Trade{
-    pub inst_id:String,
-    pub trade_id: String
+pub struct Trade {
+    pub inst_id: String,
+    pub trade_id: String,
 }

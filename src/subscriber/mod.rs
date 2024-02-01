@@ -3,7 +3,10 @@ use self::{
     validator::SubscriptionValidator,
 };
 use crate::{
-    exchange::Connector, streams::builder::Signer, subscription::{Map, SubKind, Subscription, SubscriptionMeta}, Identifier
+    exchange::Connector,
+    streams::builder::Signer,
+    subscription::{Map, SubKind, Subscription, SubscriptionMeta},
+    Identifier,
 };
 use async_trait::async_trait;
 use barter_integration::{
@@ -95,7 +98,7 @@ impl Subscriber for WebSocketSubscriberWithLogin {
     type SubMapper = WebSocketSubMapper;
 
     async fn subscribe<Exchange, Kind>(
-         signer: &Option<Signer>,
+        signer: &Option<Signer>,
         subscriptions: &[Subscription<Exchange, Kind>],
     ) -> Result<(WebSocket, Map<Instrument>), SocketError>
     where
@@ -109,12 +112,12 @@ impl Subscriber for WebSocketSubscriberWithLogin {
         match s {
             Some(s) => {
                 is_private = true;
-            },
-            None=>{}
+            }
+            None => {}
         };
         let exchange = Exchange::ID;
         let mut url = Exchange::url()?;
-        if is_private == true{
+        if is_private == true {
             url = Exchange::private_url()?;
         }
         debug!(%exchange, %url, ?subscriptions, "subscribing to WebSocket");
@@ -129,13 +132,11 @@ impl Subscriber for WebSocketSubscriberWithLogin {
             subscriptions,
         } = Self::SubMapper::map::<Exchange, Kind>(subscriptions);
 
-
         match signer {
             Some(s) => {
-                println!("------------- signer {:?}", s.ak);
                 s.login_request(&mut websocket).await?;
-            },
-            None=>{}
+            }
+            None => {}
         };
 
         // Send Subscriptions over WebSocket

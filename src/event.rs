@@ -86,6 +86,7 @@ impl DataKind {
             DataKind::OrderBook(_) => "orderbook",
             DataKind::MarkPrice(_) => "mark",
             DataKind::Account(_) => "account",
+            DataKind::Position(_) => "positions",
             DataKind::Balance(_) => "balance_and_position",
             DataKind::OptionSummary(_) => "opt-summary",
             _ => "",
@@ -107,7 +108,6 @@ impl From<MarketEvent<PublicTrade>> for MarketEvent<DataKind> {
 
 impl From<MarketEvent<Pong>> for MarketEvent<DataKind> {
     fn from(event: MarketEvent<Pong>) -> Self {
-        println!("------------------- from {:?}", event);
         Self {
             exchange_time: event.exchange_time,
             received_time: event.received_time,
@@ -198,6 +198,18 @@ impl From<MarketEvent<Balance>> for MarketEvent<DataKind> {
             exchange: event.exchange,
             instrument: event.instrument,
             kind: DataKind::Balance(event.kind),
+        }
+    }
+}
+
+impl From<MarketEvent<Position>> for MarketEvent<DataKind> {
+    fn from(event: MarketEvent<Position>) -> Self {
+        Self {
+            exchange_time: event.exchange_time,
+            received_time: event.received_time,
+            exchange: event.exchange,
+            instrument: event.instrument,
+            kind: DataKind::Position(event.kind),
         }
     }
 }

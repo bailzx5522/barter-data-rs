@@ -64,7 +64,6 @@ where
             Some(subscription_id) => subscription_id,
             None => return vec![],
         };
-
         // Find Instrument associated with Input and transform
         match self.instrument_map.find(&subscription_id) {
             Ok(instrument) => MarketIter::<Kind::Event>::from((Exchange::ID, instrument, input)).0,
