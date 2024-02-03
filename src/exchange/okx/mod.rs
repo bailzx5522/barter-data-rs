@@ -1,5 +1,4 @@
 use self::balance::{OkxAccounts, OkxPositions};
-use self::ticker::{OkxPong, OkxPongs};
 use self::{
     balance::OkxBalances, channel::OkxChannel, mark::OkxMarkPrices, market::OkxMarket,
     option_summary::OkxOptionSummaries, subscription::OkxSubResponse, ticker::OkxOrderBookL1,

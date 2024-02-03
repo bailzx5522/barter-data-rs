@@ -13,7 +13,7 @@ impl SubKind for Accounts {
 }
 
 /// Normalised Barter [`PublicTrade`] model.
-#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
     pub total_eq: f64,

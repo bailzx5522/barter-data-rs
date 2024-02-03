@@ -17,7 +17,8 @@ impl SubKind for Positions {
 #[serde(rename_all = "camelCase")]
 pub struct Position {
     pub ccy: String,
-    pub c_time: i32,
+    pub c_time: i64,
     pub inst_id: String,
     pub pos_side: Side,
+    pub pos: f64,
 }

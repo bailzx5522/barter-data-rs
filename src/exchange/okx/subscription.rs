@@ -13,6 +13,8 @@ impl Serialize for ExchangeSub<OkxChannel, OkxMarket> {
         state.serialize_field("channel", self.channel.as_ref())?;
         match self.channel.as_ref() {
             "opt-summary" => state.serialize_field("instFamily", self.market.as_ref())?,
+            "account" => (), //state.serialize_field("ccy", "ANY")?,
+            "positions" => state.serialize_field("instType", "ANY")?,
             _ => state.serialize_field("instId", self.market.as_ref())?,
         }
 

@@ -115,6 +115,8 @@ where
     Deserialize::deserialize(deserializer).map(|arg: Arg<'_>| match arg.channel {
         "balance_and_position" => ExchangeSub::from((arg.channel, arg.uid.unwrap())).id(),
         "opt-summary" => ExchangeSub::from((arg.channel, arg.inst_family.unwrap())).id(),
+        "account" => ExchangeSub::from((arg.channel, arg.uid.unwrap())).id(),
+        "positions" => ExchangeSub::from((arg.channel, arg.uid.unwrap())).id(),
         _ => ExchangeSub::from((arg.channel, arg.inst_id.unwrap())).id(),
     })
 }

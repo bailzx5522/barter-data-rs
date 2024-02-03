@@ -130,11 +130,14 @@ where
         inst_id: Option<&'a str>,
         inst_family: Option<&'a str>,
         uid: Option<&'a str>,
+        inst_type: Option<&'a str>,
     }
 
     Deserialize::deserialize(deserializer).map(|arg: Arg<'_>| match arg.channel {
         "balance_and_position" => ExchangeSub::from((arg.channel, "B-P")).id(),
         "opt-summary" => ExchangeSub::from((arg.channel, arg.inst_family.unwrap())).id(),
+        "account" => ExchangeSub::from((arg.channel, "B-P")).id(),
+        "postions" => ExchangeSub::from((arg.channel, "B-P")).id(),
         _ => ExchangeSub::from((arg.channel, arg.inst_id.unwrap())).id(),
     })
 }
