@@ -137,7 +137,7 @@ where
         "balance_and_position" => ExchangeSub::from((arg.channel, "B-P")).id(),
         "opt-summary" => ExchangeSub::from((arg.channel, arg.inst_family.unwrap())).id(),
         "account" => ExchangeSub::from((arg.channel, "B-P")).id(),
-        "postions" => ExchangeSub::from((arg.channel, "B-P")).id(),
+        "positions" => ExchangeSub::from((arg.channel, "B-P")).id(),
         _ => ExchangeSub::from((arg.channel, arg.inst_id.unwrap())).id(),
     })
 }

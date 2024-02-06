@@ -116,7 +116,6 @@ async fn main(){
                 }
 
                 DataKind::OptionSummary(opt) => {
-                    opt.inst_id == ""
                     // info!("Exchange: {exchange}, option update");
                 }
                 _ => {

@@ -22,6 +22,8 @@ use serde::{Deserialize, Serialize};
 pub type OkxBalances = OkxMessage<OkxBalance>;
 
 /// doc : https://www.okx.com/docs-v5/zh/#trading-account-websocket-balance-and-position-channel
+/// 获取账户余额和持仓信息，首次订阅按照订阅维度推送数据，此外，当成交、资金划转等事件触发时，推送数据。
+/// 该频道适用于尽快获取账户现金余额和仓位资产变化的信息。
 /// ```json
 /// {
 ///"arg": {
